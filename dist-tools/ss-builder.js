@@ -2,6 +2,11 @@
 
 var path = require('path');
 
+//set SuiteScript version (default: 2x)
+var NS = {
+    VERSION: process.env.SUITESCRIPT_VERSION || '2x'
+};
+
 var AWS = require('../');
 
 var license = [
@@ -12,7 +17,7 @@ var license = [
 
 var nsDefineStart = [
   'define([\'N/xml\', \'N/http\', \'N/https\', \'N/error\'], function(nsXml, nsHttp, nsHttps, nsError) {',
-  '  var NS = {xml: nsXml, http: nsHttp, https: nsHttps, error: nsError, util: util, log: log, require: require};',
+  '  var NS = {xml: nsXml, http: nsHttp, https: nsHttps, error: nsError, util: util, log: log, require: require, VERSION: "2x"};',
   //hide NetSuite require() function
   '  var require = undefined;',
   '  var AWS = undefined;'  // avoid "AWS is not defined" error
@@ -21,6 +26,19 @@ var nsDefineStart = [
 var nsDefineEnd = [
   '  return NS.AWS',
   '}); // end of NetSuite define()'
+].join('\n') + '\n';
+
+var ns1xStart = [
+  'var AWS = undefined;',
+  // anonymous function to wrap AWS definition
+  '(function () {',
+  '  var NS = {VERSION: "1x"};'
+].join('\n') + '\n';
+
+var ns1xEnd = [
+  '  AWS = NS.AWS;',
+  // end of anonymous function
+  '})();'
 ].join('\n') + '\n';
 
 function minify(code) {
@@ -76,13 +94,14 @@ function build(options, callback) {
     packageFilter : function (pkg, filePath) {
       if (filePath == this.basedir + '/package.json') {
         pkg.browser = {
-          'lib/aws.js' : './lib/ss2x.js',
+          'lib/aws.js' : './lib/ss.js',
           'fs' : false,
-          './global.js' : './ss2x.js',
-          './lib/node_loader.js' : './lib/netsuite_loader.js'
+          './global.js' : './ss.js',
+          './lib/ss_loader.js' : './lib/ss' + NS.VERSION + '_loader.js',
+          './lib/node_loader.js' : './lib/ss' + NS.VERSION + '_loader.js'
         };
         pkg.browserify = {
-          "transform" : "./dist-tools/ss2x-transform.js"
+          "transform" : "./dist-tools/ss-transform.js"
         };
       }
       return pkg;
@@ -94,8 +113,17 @@ function build(options, callback) {
     var code = (data || '').toString();
     if (options.minify) code = minify(code);
     else code = stripComments(code);
-
-    code = license + nsDefineStart + code + nsDefineEnd;
+    // define wrapperStart and wrapperEnd regarding SuiteScript version 
+    var wrapperStart, wrapperEnd;
+    if (NS.VERSION == '1x') {
+      wrapperStart = ns1xStart;
+      wrapperEnd = ns1xEnd;
+    }
+    else {
+      wrapperStart = nsDefineStart;
+      wrapperEnd = nsDefineEnd;
+    }
+    code = license + wrapperStart + code + wrapperEnd;
     callback(null, code);
   });
 }
@@ -113,4 +141,5 @@ if (require.main === module) {
 }
 
 build.license = license;
+build.NS = NS;
 module.exports = build;

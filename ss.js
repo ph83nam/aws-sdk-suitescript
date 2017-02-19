@@ -1,4 +1,4 @@
-require('./lib/ss2x_loader');
+require('./lib/ss' + NS.VERSION + '_loader');
 
 var AWS = require('./lib/core');
 if (typeof window !== 'undefined') window.AWS = AWS;
