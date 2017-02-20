@@ -79,7 +79,7 @@ function build(options, callback) {
           'lib/aws.js' : './lib/ss2x.js',
           'fs' : false,
           './global.js' : './ss2x.js',
-          './lib/node_loader.js' : './lib/netsuite_loader.js'
+          './lib/node_loader.js' : './lib/ss2x_loader.js'
         };
         pkg.browserify = {
           "transform" : "./dist-tools/ss2x-transform.js"
