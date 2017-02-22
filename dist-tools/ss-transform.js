@@ -1,12 +1,12 @@
 var Transform = require('stream').Transform;
 var collector = require('./service-collector');
-var license = require('./ss2x-builder').license;
+var builder = require('./ss-builder');
 
 module.exports = function(file) {
   var stream = new Transform();
   // console.error('[NS] transforming ' + file);
   var didDefineServices = !!process.env.AWS_SERVICES;
-  var isEntryPoint = !!file.match(/[\/\\]lib[\/\\]ss2x\.js$/);
+  var isEntryPoint = !!file.match(/[\/\\]lib[\/\\]ss\.js$/);
 
   stream._transform = function(data, encoding, callback) {
     callback(null, data);
@@ -21,6 +21,11 @@ module.exports = function(file) {
         var lines = code.split('\n');
         lines = lines.filter(function(line) {
           return !line.match(/^require\(.+browser_default['"]\);$/);
+        }).map(function(line) {
+          if (line.match(/^require\(.+ss.+NS\.VERSION.+\);$/)) {
+            line = 'require("./ss' + builder.NS.VERSION + '_loader.js");';
+          }
+          return line;
         });
         code = lines.join('\n');
         data = new Buffer(code);
@@ -36,7 +41,7 @@ module.exports = function(file) {
       };
     }
 
-    stream.push(license);
+    stream.push(builder.license);
   }
 
   return stream;

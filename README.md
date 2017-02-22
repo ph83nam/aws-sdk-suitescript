@@ -24,24 +24,38 @@ npm install
 For all AWS services
 
 ```sh
-node dist-tools/ss1x-builder.js > aws-sdk.js
+SUITESCRIPT_VERSION=1x node dist-tools/ss-builder.js 1> aws-sdk.js
 ```
 
 For specific service(s)
 
 ```sh
-node dist-tools/ss1x-builder.js s3,sqs > aws-s3-sqs.js
+SUITESCRIPT_VERSION=1x node dist-tools/ss-builder.js s3,sqs 1> aws-s3-sqs.js
 ```
 
 ### Suite Script 2.x module
 
-Use similar syntax with `dist-tools/ss2x-builder.js`
+Use similar syntax without `SUITESCRIPT_VERSION` environment variable or set to `2x` (default).
 
 ## Usage and Debug
 
 ### In Suite Script 1.x
 
-TBD
+With AWS library included, create service object:
+
+```javascript
+
+var context = nlapiGetContext();
+var options = {
+   region: context.getSetting('SCRIPT', 'custscript_aws_region'),
+   accessKeyId: context.getSetting('SCRIPT', 'custscript_aws_access_key_id'),
+   secretAccessKey: context.getSetting('SCRIPT', 'custscript_aws_secret_key'),
+};
+
+// create service object
+var sqs = new AWS.SQS(options);
+
+```
 
 ### In Suite Script 2.x
 
